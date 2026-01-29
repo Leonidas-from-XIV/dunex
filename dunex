@@ -1,3 +1,41 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+
+CACHE_DIR="$HOME/.cache/dunex"
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    run)
+      PROG="$2"
+      shift
+      shift
+      ;;
+    *)
+      echo "Unknown option"
+      exit 1
+      ;;
+  esac
+done
+
+PROG_DIR="$CACHE_DIR/$PROG"
+
+mkdir -p "$PROG_DIR"
+cd "$PROG_DIR"
+cat > dune-project <<EOF
+(lang dune 3.21)
+(package
+  (name dummy)
+  (allow_empty)
+  (depends
+    $PROG))
+EOF
+cat > dune-workspace <<EOF
+(lang dune 3.21)
+(pkg enabled)
+EOF
+dune build @pkg-install
+cd - > /dev/null
+PROG_INSTALL_PATH=$(find "$PROG_DIR/_build/_private/default/.pkg" -name 'utop.*' -type d)
+PROG_BIN="$PROG_INSTALL_PATH/target/bin/$PROG"
+exec "$PROG_BIN"
