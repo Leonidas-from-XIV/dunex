@@ -31,8 +31,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 
-PKG=${PKG%%.*}
 VER=${PKG#*.}
+PKG=${PKG%%.*}
 
 if [ "$PROG" == "--" ]; then
   PROG="$PKG"
@@ -61,7 +61,7 @@ else
 	  (name dummy)
 	  (allow_empty)
 	  (depends
-	    ($PKG (= $VER)))
+	    ($PKG (= $VER))))
 	EOF
 fi
 
@@ -71,9 +71,14 @@ cat > dune-workspace <<EOF
 EOF
 dune build @pkg-install
 
+LOCKFILE=$(find "$PKG_DIR/_build/_private/default/.lock/dune.lock" -name "${PKG}.*" -type f)
+DEPENDENCY_DIR=$(basename $LOCKFILE)
+DEPENDENCY_DIR=${DEPENDENCY_DIR%.*}
+
 cd - > /dev/null
 
 # find binary and run
-PKG_INSTALL_PATH=$(find "$PKG_DIR/_build/_private/default/.pkg" -name "${PKG}.*" -type d)
+PKG_INSTALL_PATH=$(find "$PKG_DIR/_build/_private/default/.pkg" -name "${DEPENDENCY_DIR}-*" -type d)
+
 PROG_BIN="$PKG_INSTALL_PATH/target/bin/$PROG"
 exec "$PROG_BIN" "$@"
