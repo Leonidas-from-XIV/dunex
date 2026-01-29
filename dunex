@@ -14,8 +14,6 @@ while [[ $# -gt 0 ]]; do
 
       if [ "$PROG" != "--" ]; then
 	shift
-      else
-	PROG="$PKG"
       fi
 
       shift
@@ -32,19 +30,41 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+
+PKG=${PKG%%.*}
+VER=${PKG#*.}
+
+if [ "$PROG" == "--" ]; then
+  PROG="$PKG"
+fi
+
 PKG_DIR="$CACHE_DIR/$PKG"
 
 # set up dune project
 mkdir -p "$PKG_DIR"
 cd "$PKG_DIR"
-cat > dune-project <<EOF
-(lang dune 3.21)
-(package
-  (name dummy)
-  (allow_empty)
-  (depends
-    $PKG))
-EOF
+
+if [ "$PKG" = "$VER" ]; then
+  # latest
+  cat > dune-project <<-EOF
+	(lang dune 3.21)
+	(package
+	  (name dummy)
+	  (allow_empty)
+	  (depends
+	    $PKG))
+	EOF
+else
+  cat > dune-project <<-EOF
+	(lang dune 3.21)
+	(package
+	  (name dummy)
+	  (allow_empty)
+	  (depends
+	    ($PKG (= $VER)))
+	EOF
+fi
+
 cat > dune-workspace <<EOF
 (lang dune 3.21)
 (pkg enabled)

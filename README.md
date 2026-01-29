@@ -18,5 +18,5 @@ Available commands
 ------------------
 
 ```sh
-dunex run <pkg> [<program> -- <options>]
+dunex run <pkg>.[<version>] [<program> -- <options>]
 ```
