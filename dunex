@@ -2,14 +2,28 @@
 
 set -euo pipefail
 
-CACHE_DIR="$HOME/.cache/dunex"
+CACHE_LOCATION=${XDG_CACHE_HOME:-$HOME/.cache}
+CACHE_DIR="$CACHE_LOCATION/dunex"
 
+# parse command line
 while [[ $# -gt 0 ]]; do
   case $1 in
     run)
-      PROG="$2"
+      PKG="$2"
+      PROG="${3:---}"
+
+      if [ "$PROG" != "--" ]; then
+	shift
+      else
+	PROG="$PKG"
+      fi
+
       shift
       shift
+      ;;
+    --)
+      shift
+      break
       ;;
     *)
       echo "Unknown option"
@@ -18,24 +32,28 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-PROG_DIR="$CACHE_DIR/$PROG"
+PKG_DIR="$CACHE_DIR/$PKG"
 
-mkdir -p "$PROG_DIR"
-cd "$PROG_DIR"
+# set up dune project
+mkdir -p "$PKG_DIR"
+cd "$PKG_DIR"
 cat > dune-project <<EOF
 (lang dune 3.21)
 (package
   (name dummy)
   (allow_empty)
   (depends
-    $PROG))
+    $PKG))
 EOF
 cat > dune-workspace <<EOF
 (lang dune 3.21)
 (pkg enabled)
 EOF
 dune build @pkg-install
+
 cd - > /dev/null
-PROG_INSTALL_PATH=$(find "$PROG_DIR/_build/_private/default/.pkg" -name 'utop.*' -type d)
-PROG_BIN="$PROG_INSTALL_PATH/target/bin/$PROG"
-exec "$PROG_BIN"
+
+# find binary and run
+PKG_INSTALL_PATH=$(find "$PKG_DIR/_build/_private/default/.pkg" -name "${PKG}.*" -type d)
+PROG_BIN="$PKG_INSTALL_PATH/target/bin/$PROG"
+exec "$PROG_BIN" "$@"

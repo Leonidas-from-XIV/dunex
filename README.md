@@ -17,4 +17,6 @@ No thanks.
 Available commands
 ------------------
 
-dunex run [package] # download and run the given package
+```sh
+dunex run <pkg> [<program> -- <options>]
+```
